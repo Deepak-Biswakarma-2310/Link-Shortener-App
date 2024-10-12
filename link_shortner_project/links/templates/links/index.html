@@ -1,0 +1,76 @@
+{% extends 'links/_base.html' %}
+
+{% block title %}Link List{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Your Shortened Links</h1>
+
+    <!-- Table for displaying shortened links -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left text-gray-800">Name</th>
+                    <th class="px-4 py-2 text-left text-gray-800">Original URL</th>
+                    <th class="px-4 py-2 text-left text-gray-800">Short URL</th>
+                    <th class="px-4 py-2 text-left text-gray-800">Clicks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in links %}
+                <tr class="border-b">
+                    <td class="px-4 py-2">{{ link.name }}</td>
+                    <td class="px-4 py-2">
+                        <a href="{{ link.url }}" target="_blank" class="text-indigo-600 hover:underline">{{ link.url }}</a>
+                    </td>
+                    <td class="px-4 py-2">
+                        <a href="{% url 'root-link' link.slug %}" class="slug-link text-indigo-600 hover:underline" data-slug="{{ link.slug }}">{{ link.slug }}</a>
+                    </td>
+                    <td class="px-4 py-2 click-count">{{ link.clicks }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-600">No links available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- JavaScript for dynamic click update -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all the slug links
+        const linkElements = document.querySelectorAll('.slug-link');
+
+        linkElements.forEach(function(linkElement) {
+            linkElement.addEventListener('click', function(e) {
+                e.preventDefault();  // Prevent default link behavior
+
+                const linkUrl = this.href;
+                const clickCountElement = this.closest('tr').querySelector('.click-count');
+
+                // Send AJAX request to update the clicks
+                fetch(linkUrl, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'  // Detect AJAX request
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update the click count dynamically
+                    clickCountElement.textContent = data.clicks;
+                })
+                .catch(error => console.error('Error:', error));
+
+                // Optionally open the link in a new tab
+                window.open(linkUrl, '_blank');
+            });
+        });
+    });
+</script>
+
+{% endblock %}
